@@ -16,7 +16,7 @@ const user = mongoose.Schema({
     required: true,
     unique: true,
   },
-  exercise: [
+  log: [
     {
       description: {
         type: String,
@@ -71,10 +71,10 @@ app.post("/api/exercise/add", (req, res) => {
   }
   User.findById(userId, (error, user) => {
     if (error) return res.send("Please send data in correct format");
-    user.exercise.push({ userId, description, duration, date });
+    user.log.push({ userId, description, duration, date });
     user.save((error, userdetails) => {
       if (error) return res.send("Please send data in correct format");
-      const curr = userdetails.exercise[userdetails.exercise.length - 1];
+      const curr = userdetails.log[userdetails.log.length - 1];
       res.send({
         username: userdetails.username,
         _id: userdetails._id,
@@ -93,8 +93,8 @@ app.get("/api/exercise/log", (req, res) => {
   }
   User.findById(userId, (error, user) => {
     if (error || user <= 0) return res.send("Please Use correct user id");
-    const { _id, username, exercise, __v: count } = user;
-    res.json({ _id, username, exercise, count });
+    const { _id, username, log, __v: count } = user;
+    res.json({ _id, username, log, count });
   });
 });
 
