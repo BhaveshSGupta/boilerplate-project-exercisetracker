@@ -69,17 +69,35 @@ app.post("/api/exercise/add", (req, res) => {
   if (!userId || !description || !duration || !date) {
     return res.send("Please send data in correct format");
   }
+  const dayarray = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const monthArray = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   User.findById(userId, (error, user) => {
     if (error) return res.send("Please send data in correct format");
     user.exercise.push({ userId, description, duration, date });
-    user.save((error, newu) => {
+    user.save((error, userdetails) => {
       if (error) return res.send("Please send data in correct format");
+      const curr = userdetails.exercise[userdetails.exercise.length - 1];
       res.send({
-        _id: newu._id,
-        username: newu.username,
-        date: newu.exercise[newu.exercise.length - 1].date,
-        duration: newu.exercise[newu.exercise.length - 1].duration,
-        description: newu.exercise[newu.exercise.length - 1].description,
+        _id: userdetails._id,
+        username: userdetails.username,
+        date: `${dayarray[curr.date.getDay()]} ${
+          monthArray[curr.date.getMonth()]
+        } ${curr.date.getDate()} ${curr.date.getFullYear()}`,
+        duration: curr.duration,
+        description: curr.description,
       });
     });
   });
