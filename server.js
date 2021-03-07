@@ -36,7 +36,8 @@ const user = mongoose.Schema({
 const User = mongoose.model("User", user);
 
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use(express.static("public"));
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
@@ -58,20 +59,21 @@ app.get("/api/exercise/users", (req, res) => {
 });
 
 app.post("/api/exercise/add", (req, res) => {
-  const { userId, description, duration } = req.body;
-  const date =
-    req.body.date === ""
-      ? new Date()
-      : new Date(req.body.date) == "Invalid Date"
-      ? ""
-      : new Date(req.body.date);
+  const { userId, description, duration, date = "" } = req.body;
+  // console.log(userId, description, duration);
+  const dateString = date === "" ? new Date() : new Date(date);
 
-  if (!userId || !description || !duration || !date) {
+  // console.log(dateString);
+  if (!userId || !description || !duration || !dateString) {
     return res.send("Please send data in correct format");
   }
   User.findById(userId, (error, user) => {
     if (error) return res.send("Please send data in correct format");
-    user.log.push({ userId, description, duration, date });
+    user.log.push({
+      description,
+      duration,
+      date: dateString,
+    });
     user.save((error, userdetails) => {
       if (error) return res.send("Please send data in correct format");
       const curr = userdetails.log[userdetails.log.length - 1];
@@ -87,15 +89,49 @@ app.post("/api/exercise/add", (req, res) => {
 });
 
 app.get("/api/exercise/log", (req, res) => {
-  const { userId } = req.query;
+  console.log({ query: req.query });
+  const { userId, from, to, limit = 0 } = req.query;
   if (!userId) {
     return res.send("userid unknown");
   }
-  User.findById(userId, (error, user) => {
-    if (error || user <= 0) return res.send("Please Use correct user id");
-    const { _id, username, log, __v: count } = user;
-    res.json({ _id, username, log, count });
-  });
+  User.findById(
+    userId,
+    {
+      username: 1,
+      log: { description: 1, duration: 1, date: 1 },
+    },
+    (error, user) => {
+      if (error || !user) return res.send("Please Use correct user id");
+
+      let { _id, username, log } = user;
+
+      if (from || to) {
+        console.log(Date.parse(from), Date.parse(to), new Date(from));
+        log = log.filter((item) => {
+          if (from && to)
+            return item.date >= new Date(from) && item.date <= new Date(to);
+          else if (from) return item.date >= new Date(from);
+          else if (to) return item.date >= new Date(to);
+          else return "";
+        });
+      }
+      limit !== 0 ? (log = log.slice(0, limit)) : "";
+
+      res.json({
+        _id,
+        username,
+        count: log.length,
+        log: log.map((exercise) => {
+          const { duration, description, date: dateString } = exercise;
+          return {
+            date: new Date(dateString).toDateString(),
+            duration,
+            description,
+          };
+        }),
+      });
+    }
+  );
 });
 
 const listener = app.listen(process.env.PORT || 3000, () => {
