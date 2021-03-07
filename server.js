@@ -80,7 +80,7 @@ app.post("/api/exercise/add", (req, res) => {
         _id: userdetails._id,
         description: curr.description,
         duration: curr.duration,
-        date: curr.date.toUTCString('Www Mmm dd yyyy'), 
+        date: curr.date.toDateString(), 
       });
     });
   });
