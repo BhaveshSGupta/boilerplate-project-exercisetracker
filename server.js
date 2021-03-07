@@ -80,9 +80,21 @@ app.post("/api/exercise/add", (req, res) => {
         _id: userdetails._id,
         description: curr.description,
         duration: curr.duration,
-        date: curr.date.toDateString(), 
+        date: curr.date.toDateString(),
       });
     });
+  });
+});
+
+app.get("/api/exercise/log", (req, res) => {
+  const { userId } = req.query;
+  if (!userId) {
+    return res.send("userid unknown");
+  }
+  User.findById(userId, (error, user) => {
+    if (error || user <= 0) return res.send("Please Use correct user id");
+    const { _id, username, exercise, __v: count } = user;
+    res.json({ _id, username, exercise, count });
   });
 });
 
